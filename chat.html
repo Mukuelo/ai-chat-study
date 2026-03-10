@@ -1,102 +1,194 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Badanie AI – Czat</title>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-    #chat { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; background: #fff; border-radius: 8px; }
-    .message { padding: 8px 12px; margin: 5px 0; border-radius: 8px; max-width: 70%; }
-    .user { background: #d1e7dd; align-self: flex-end; margin-left: auto; }
-    .ai-neutral { background: #f0f0f0; }
-    .ai-warm { background: #e0f7fa; }
-    #inputArea { margin-top: 10px; display: flex; gap: 5px; }
-    #inputText { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
-    #sendBtn { padding: 8px 12px; border: none; border-radius: 5px; background: #007bff; color: #fff; cursor: pointer; }
-  </style>
+<meta charset="UTF-8">
+<title>ChatGPT</title>
+
+<style>
+body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+
+#chat {
+border: 1px solid #ccc;
+padding: 10px;
+height: 300px;
+overflow-y: auto;
+background: #fff;
+border-radius: 8px;
+}
+
+.message {
+padding: 8px 12px;
+margin: 5px 0;
+border-radius: 8px;
+max-width: 70%;
+}
+
+.user {
+background: #d1e7dd;
+margin-left: auto;
+}
+
+.ai-neutral {
+background: #f0f0f0;
+}
+
+.ai-warm {
+background: #e0f7fa;
+}
+
+#inputArea {
+margin-top: 10px;
+display: flex;
+gap: 5px;
+}
+
+#inputText {
+flex: 1;
+padding: 8px;
+border-radius: 5px;
+border: 1px solid #ccc;
+}
+
+#sendBtn {
+padding: 8px 12px;
+border: none;
+border-radius: 5px;
+background: #007bff;
+color: #fff;
+cursor: pointer;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Badanie AI – Czat</h2>
+<h2>ChatGPT</h2>
 
 <div id="chat"></div>
 
 <div id="inputArea">
-  <input type="text" id="inputText" placeholder="Wpisz swoje pytanie...">
-  <select id="styleSelect">
-    <option value="neutralny">Neutralny</option>
-    <option value="ciepły">Ciepły</option>
-  </select>
-  <button id="sendBtn">Wyślij</button>
+
+<input
+type="text"
+id="inputText"
+placeholder="Wpisz swoje pytanie..."
+>
+
+<select id="styleSelect">
+<option value="neutralny">Neutralny</option>
+<option value="cieply">Ciepły</option>
+</select>
+
+<button id="sendBtn">Wyślij</button>
+
 </div>
 
 <script>
 
-  const chat = document.getElementById('chat');
-  const inputText = document.getElementById('inputText');
-  const sendBtn = document.getElementById('sendBtn');
-  const styleSelect = document.getElementById('styleSelect');
+const chat = document.getElementById('chat');
+const inputText = document.getElementById('inputText');
+const sendBtn = document.getElementById('sendBtn');
+const styleSelect = document.getElementById('styleSelect');
 
-  // 🔹 odczyt stylu z URL (dla Qualtrics)
-  const params = new URLSearchParams(window.location.search);
-  const forcedStyle = params.get("style");
+function addMessage(text, className) {
 
-  // 🔹 jeśli styl jest narzucony – ustaw go i ukryj selektor
-  if (forcedStyle) {
-    styleSelect.value = forcedStyle === "warm" ? "ciepły" : "neutralny";
-    styleSelect.style.display = "none";
-  }
+const msg = document.createElement('div');
 
-  function addMessage(text, className) {
-    const msg = document.createElement('div');
-    msg.className = 'message ' + className;
-    msg.innerText = text;
-    chat.appendChild(msg);
-    chat.scrollTop = chat.scrollHeight;
-  }
+msg.className = 'message ' + className;
 
-  async function sendToGPT(userText, style) {
-    try {
+msg.innerText = text;
 
-      const response = await fetch("http://localhost:3000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, style })
-      });
+chat.appendChild(msg);
 
-      const data = await response.json();
+chat.scrollTop = chat.scrollHeight;
 
-      const aiClass = style === 'neutralny' ? 'ai-neutral' : 'ai-warm';
-      addMessage(data.reply, aiClass);
+}
 
-    } catch (error) {
-      console.error("Błąd połączenia z GPT:", error);
-      addMessage("Wystąpił błąd w połączeniu z serwerem.", "ai-neutral");
-    }
-  }
 
-  sendBtn.addEventListener('click', () => {
+// pobranie stylu z URL (Qualtrics)
 
-    const userText = inputText.value.trim();
-    if (!userText) return;
+const urlParams = new URLSearchParams(window.location.search);
 
-    addMessage(userText, 'user');
+const forcedStyle = urlParams.get("style");
 
-    // 🔹 styl z Qualtrics lub z selektora
-    const style = forcedStyle
-      ? (forcedStyle === "warm" ? "ciepły" : "neutralny")
-      : styleSelect.value;
 
-    inputText.value = '';
+// jeśli styl został przekazany z Qualtrics → ukryj selektor
 
-    sendToGPT(userText, style);
-  });
+if (forcedStyle) {
 
-  inputText.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendBtn.click();
-  });
+styleSelect.value = forcedStyle;
+
+styleSelect.style.display = "none";
+
+}
+
+
+async function sendToGPT(userText) {
+
+const style = forcedStyle || styleSelect.value;
+
+try {
+
+const response = await fetch("/chat", {
+
+method: "POST",
+
+headers: { "Content-Type": "application/json" },
+
+body: JSON.stringify({
+
+message: userText,
+
+style: style
+
+})
+
+});
+
+const data = await response.json();
+
+const aiClass = style === 'neutralny'
+? 'ai-neutral'
+: 'ai-warm';
+
+addMessage(data.reply, aiClass);
+
+} catch (error) {
+
+console.error("Błąd połączenia z GPT:", error);
+
+addMessage("Wystąpił błąd w połączeniu z serwerem.", "ai-neutral");
+
+}
+
+}
+
+
+sendBtn.addEventListener('click', () => {
+
+const userText = inputText.value.trim();
+
+if (!userText) return;
+
+addMessage(userText, 'user');
+
+inputText.value = '';
+
+sendToGPT(userText);
+
+});
+
+
+inputText.addEventListener('keydown', (e) => {
+
+if (e.key === 'Enter') sendBtn.click();
+
+});
 
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
