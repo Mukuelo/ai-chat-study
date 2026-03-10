@@ -25,9 +25,19 @@ app.post("/chat", async (req, res) => {
 
     const { message, style } = req.body;
 
-    const systemPrompt = style === "ciepły"
-      ? "Odpowiadaj w przyjazny, wspierający sposób."
-      : "Odpowiadaj w neutralny, rzeczowy sposób.";
+    let systemPrompt = "";
+
+    if (style === "pewny") {
+      systemPrompt = "Odpowiadaj w sposób bardzo zdecydowany i pewny siebie. Formułuj odpowiedzi autorytatywnie i jednoznacznie.";
+    }
+
+    else if (style === "niepewny") {
+      systemPrompt = "Odpowiadaj w sposób niepewny i ostrożny. Używaj sformułowań takich jak: 'wydaje mi się', 'możliwe że', 'nie jestem całkiem pewien', 'trudno powiedzieć jednoznacznie'.";
+    }
+
+    else {
+      systemPrompt = "Odpowiadaj w neutralny sposób.";
+    }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
