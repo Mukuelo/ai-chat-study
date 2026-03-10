@@ -56,11 +56,17 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
-    const reply =
-      data?.choices?.[0]?.message?.content ||
-      "Nie udało się uzyskać odpowiedzi z AI.";
+console.log("OPENAI RESPONSE:", data);
 
-    res.json({ reply });
+if (!response.ok) {
+  return res.status(500).json({
+    reply: "Błąd OpenAI: " + JSON.stringify(data)
+  });
+}
+
+const reply = data.choices[0].message.content;
+
+res.json({ reply });
 
   } catch (error) {
     console.error("Błąd GPT:", error);
